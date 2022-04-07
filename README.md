@@ -1,2 +1,2 @@
 # communion-scratchpad
-A place to interface with NEAR api's and some Smart Contracts
+A Grimy, dirty, sloppy, quick, playground for interfacing with NEAR api's
