@@ -1,0 +1,1 @@
+near call mikedev-scratchpad-counter.testnet increment --accountId mikecommunion-scratchpad.testnet

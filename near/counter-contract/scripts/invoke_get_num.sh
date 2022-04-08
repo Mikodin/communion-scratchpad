@@ -1,0 +1,1 @@
+near call mikedev-scratchpad-counter.testnet get_num --accountId mikecommunion-scratchpad.testnet

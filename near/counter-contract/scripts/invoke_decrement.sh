@@ -1,0 +1,1 @@
+near call mikedev-scratchpad-counter.testnet decrement --accountId mikecommunion-scratchpad.testnet
