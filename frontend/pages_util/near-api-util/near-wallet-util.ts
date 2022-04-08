@@ -1,5 +1,5 @@
 import * as nearAPI from "near-api-js";
-const { connect, keyStores, WalletConnection } = nearAPI;
+const { WalletConnection } = nearAPI;
 
 import type { NearConfig } from "./near-config";
 
@@ -22,7 +22,7 @@ export default async function initNearWallet(config: NearConfig): Promise<
         config
       )
     );
-    const wallet = new nearAPI.WalletAccount(near, null);
+    const wallet = new nearAPI.WalletAccount(near, "communion-scratchpad");
     const accountId = wallet.getAccountId();
 
     return {
@@ -37,28 +37,36 @@ export default async function initNearWallet(config: NearConfig): Promise<
 
 export async function signInToNearWallet(
   rawNear: nearAPI.Near
-): Promise<nearAPI.WalletConnection> {
-  const wallet = new WalletConnection(rawNear, null);
+): Promise<nearAPI.WalletConnection | undefined> {
+  try {
+    const wallet = new WalletConnection(rawNear, "communion-scratchpad");
 
-  if (wallet.isSignedIn()) {
+    if (wallet.isSignedIn()) {
+      return wallet;
+    }
+
+    await wallet.requestSignIn(
+      "example-contract.testnet", // contract requesting access
+      "Example App", // optional
+      "http://localhost:3000", // optional
+      "http://localhost:3000" // optional
+    );
+
     return wallet;
+  } catch (error) {
+    console.error("Error in signInToNearWallet", error);
   }
-
-  await wallet.requestSignIn(
-    "example-contract.testnet", // contract requesting access
-    "Example App", // optional
-    "http://localhost:3000", // optional
-    "http://localhost:3000" // optional
-  );
-
-  return wallet;
 }
 
 export async function signOutFromNearWallet(
   wallet: nearAPI.WalletConnection
 ): Promise<void> {
-  await wallet.signOut();
-  await wallet._keyStore.clear();
-  // @TODO figure out where that this is coming from :)
-  localStorage.removeItem("undefined_wallet_auth_key");
+  try {
+    await wallet.signOut();
+    await wallet._keyStore.clear();
+    // @TODO figure out where that this is coming from :)
+    localStorage.removeItem("communion-scratchpad_wallet_auth_key");
+  } catch (error) {
+    console.error("Error in signOutFromNearWallet", error);
+  }
 }
