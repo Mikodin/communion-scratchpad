@@ -46,8 +46,8 @@ export async function signInToNearWallet(
     }
 
     await wallet.requestSignIn(
-      "example-contract.testnet", // contract requesting access
-      "Example App", // optional
+      "mikedev-scratchpad-counter.testnet", // contract requesting access
+      "Scratchpad Counter", // optional
       "http://localhost:3000", // optional
       "http://localhost:3000" // optional
     );

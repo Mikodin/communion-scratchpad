@@ -1,5 +1,4 @@
-const CONTRACT_NAME =
-  process.env.CONTRACT_NAME || "wallet-example"; /* TODO: fill this in! */
+const CONTRACT_NAME = "mikedev-scratchpad-counter.testnet";
 
 export type NearConfig = {
   networkId: string;

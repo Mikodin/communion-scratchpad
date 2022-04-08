@@ -1,7 +1,7 @@
 import type { NextPage } from "next";
 import { useRouter } from "next/router";
 import { useState, useEffect } from "react";
-import type { Near, WalletConnection } from "near-api-js";
+import type { Near, WalletConnection, Contract } from "near-api-js";
 import type { AccountBalance } from "near-api-js/lib/account";
 
 import getNearConfig from "../pages_util/near-api-util/near-config";
@@ -9,25 +9,40 @@ import initNearWallet, {
   signInToNearWallet,
   signOutFromNearWallet,
 } from "../pages_util/near-api-util/near-wallet-util";
+import {
+  initCounterContract,
+  callGetNumFromContract,
+  callIncrementFromContract,
+  callDecrementFromContract,
+} from "../pages_util/near-api-util/near-contract-util";
 
 const Home: NextPage = () => {
   const router = useRouter();
   const [near, setNear] = useState<Near>();
   const [wallet, setWallet] = useState<WalletConnection>();
+  const [counterContract, setCounterContract] = useState<Contract>();
+  const [counterContractValue, setCounterContractValue] = useState<number>();
   const [walletBalance, setWalletBalance] = useState<AccountBalance>();
 
   const initNear = async (): Promise<void> => {
+    console.log("Init Near");
     const nearConfig = getNearConfig("dev");
     const rawNear = await initNearWallet(nearConfig);
 
     if (rawNear) {
       setNear(rawNear.near);
-      if (rawNear.wallet.isSignedIn()) {
-        setWallet(rawNear.wallet);
-        console.log(await rawNear.wallet.account().getAccountDetails());
-        console.log(await rawNear.wallet.account().getAccountBalance());
-      }
-      console.log("initNear", rawNear);
+    }
+
+    if (rawNear?.wallet.isSignedIn()) {
+      setWallet(rawNear.wallet);
+    }
+  };
+
+  const initNearCounterContract = async (): Promise<void> => {
+    if (!counterContract && near && wallet) {
+      const contract = await initCounterContract(wallet, getNearConfig("dev"));
+      console.log(contract);
+      setCounterContract(contract);
     }
   };
 
@@ -46,22 +61,46 @@ const Home: NextPage = () => {
     }
   };
 
-  useEffect(() => {
-    if (!near) {
-      initNear();
+  const getWalletBalance = async (): Promise<void> => {
+    if (wallet) {
+      console.log("getWalletBalance");
+      const balance = await wallet.account().getAccountBalance();
+      setWalletBalance(balance);
     }
+  };
+
+  useEffect(() => {
+    const initAsync = async (): Promise<void> => {
+      if (!near) {
+        await initNear();
+      }
+    };
+
+    initAsync();
   }, [near]);
 
   useEffect(() => {
-    console.log("fire once");
-    const getWalletBalance = async (): Promise<void> => {
+    const initAsync = async (): Promise<void> => {
       if (wallet) {
-        const balance = await wallet.account().getAccountBalance();
-        setWalletBalance(balance);
+        await getWalletBalance();
       }
     };
-    getWalletBalance();
+    initAsync();
   }, [wallet]);
+
+  useEffect(() => {
+    const initAsync = async (): Promise<void> => {
+      await initNearCounterContract();
+    };
+
+    initAsync();
+  }, [near, wallet]);
+
+  const callCounterContract = async (contractFn: Function): Promise<void> => {
+    const num = await contractFn(counterContract);
+    await getWalletBalance();
+    setCounterContractValue(num);
+  };
 
   return (
     <div className="">
@@ -90,6 +129,33 @@ const Home: NextPage = () => {
             >
               Connect Wallet
             </button>
+          )}
+
+          {wallet && counterContract && (
+            <>
+              <button
+                onClick={async () => {
+                  callCounterContract(callGetNumFromContract);
+                }}
+              >
+                Get Counter Number
+              </button>
+              <button
+                onClick={async () => {
+                  callCounterContract(callIncrementFromContract);
+                }}
+              >
+                Increment
+              </button>
+              <button
+                onClick={async () => {
+                  callCounterContract(callDecrementFromContract);
+                }}
+              >
+                Decrement
+              </button>
+              <p>Counter Num: {counterContractValue}</p>
+            </>
           )}
         </div>
       </main>
