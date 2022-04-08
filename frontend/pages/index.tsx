@@ -71,12 +71,25 @@ const Home: NextPage = () => {
 
           {wallet ? (
             <>
-              <p>{wallet.getAccountId()}</p>
-              <button onClick={signOutOfWallet}>Sign Out of Wallet</button>
+              <p>Connected Wallet: {wallet.getAccountId()}</p>
               <p>Balance: {walletBalance?.available}</p>
+
+              <button
+                type={"button"}
+                onClick={signOutOfWallet}
+                className="mt-10 bg-rose-400 text-white py-2 px-4 rounded-full"
+              >
+                Sign Out of Wallet
+              </button>
             </>
           ) : (
-            <button onClick={connectWallet}>Connect Wallet</button>
+            <button
+              type={"button"}
+              onClick={connectWallet}
+              className="mt-10 bg-blue-400 text-white py-2 px-4 rounded-full"
+            >
+              Connect Wallet
+            </button>
           )}
         </div>
       </main>
