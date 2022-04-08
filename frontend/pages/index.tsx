@@ -1,4 +1,5 @@
 import type { NextPage } from "next";
+import { useRouter } from "next/router";
 import { useState, useEffect } from "react";
 import type { Near, WalletConnection } from "near-api-js";
 
@@ -9,54 +10,40 @@ import initNearWallet, {
 } from "../pages_util/near-api-util/near-wallet-util";
 
 const Home: NextPage = () => {
+  const router = useRouter();
   const [near, setNear] = useState<Near>();
   const [wallet, setWallet] = useState<WalletConnection>();
 
   const initNear = async (): Promise<void> => {
-    try {
-      const nearConfig = getNearConfig("dev");
-      const rawNear = await initNearWallet(nearConfig);
-      if (rawNear) {
-        setNear(rawNear.near);
-        if (rawNear.wallet.isSignedIn()) {
-          setWallet(rawNear.wallet);
-        }
-        console.log("initNear", rawNear);
+    const nearConfig = getNearConfig("dev");
+    const rawNear = await initNearWallet(nearConfig);
+
+    if (rawNear) {
+      setNear(rawNear.near);
+      if (rawNear.wallet.isSignedIn()) {
+        setWallet(rawNear.wallet);
       }
-    } catch (e) {
-      console.log("initNear error", e);
+      console.log("initNear", rawNear);
     }
   };
 
   const connectWallet = async (): Promise<void> => {
-    try {
-      if (near) {
-        const signedInWallet = await signInToNearWallet(near);
-        setWallet(signedInWallet);
-      }
-    } catch (e) {
-      console.log("connectWallet error", e);
+    if (near) {
+      const signedInWallet = await signInToNearWallet(near);
+      setWallet(signedInWallet);
     }
   };
 
   const signOutOfWallet = async (): Promise<void> => {
-    try {
-      if (wallet) {
-        const signedOutWallet = await signOutFromNearWallet(wallet);
-        setWallet(undefined);
-        console.log(signedOutWallet);
-      }
-    } catch (e) {
-      console.log("signOutOfWallet", e);
+    if (wallet) {
+      await signOutFromNearWallet(wallet);
+      setWallet(undefined);
+      router.push("/");
     }
   };
 
   useEffect(() => {
-    try {
-      initNear();
-    } catch (error) {
-      console.log("error on mount", error);
-    }
+    initNear();
   }, []);
 
   return (

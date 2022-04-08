@@ -22,8 +22,7 @@ export default async function initNearWallet(config: NearConfig): Promise<
         config
       )
     );
-    // @ts-expect-error
-    const wallet = new nearAPI.WalletAccount(near);
+    const wallet = new nearAPI.WalletAccount(near, null);
     const accountId = wallet.getAccountId();
 
     return {
@@ -39,7 +38,6 @@ export default async function initNearWallet(config: NearConfig): Promise<
 export async function signInToNearWallet(
   rawNear: nearAPI.Near
 ): Promise<nearAPI.WalletConnection> {
-  // create wallet connection
   const wallet = new WalletConnection(rawNear, null);
 
   if (wallet.isSignedIn()) {
@@ -56,8 +54,11 @@ export async function signInToNearWallet(
   return wallet;
 }
 
-export async function signOutFromNearWallet(wallet: nearAPI.WalletConnection) {
+export async function signOutFromNearWallet(
+  wallet: nearAPI.WalletConnection
+): Promise<void> {
   await wallet.signOut();
   await wallet._keyStore.clear();
-  console.log(wallet);
+  // @TODO figure out where that this is coming from :)
+  localStorage.removeItem("undefined_wallet_auth_key");
 }
