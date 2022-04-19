@@ -63,9 +63,6 @@ export async function signOutFromNearWallet(
 ): Promise<void> {
   try {
     await wallet.signOut();
-    await wallet._keyStore.clear();
-    // @TODO figure out where that this is coming from :)
-    localStorage.removeItem("communion-scratchpad_wallet_auth_key");
   } catch (error) {
     console.error("Error in signOutFromNearWallet", error);
   }

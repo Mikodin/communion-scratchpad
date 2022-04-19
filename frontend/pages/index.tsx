@@ -18,33 +18,12 @@ import {
 
 const Home: NextPage = () => {
   const router = useRouter();
+
   const [near, setNear] = useState<Near>();
   const [wallet, setWallet] = useState<WalletConnection>();
   const [counterContract, setCounterContract] = useState<Contract>();
   const [counterContractValue, setCounterContractValue] = useState<number>();
   const [walletBalance, setWalletBalance] = useState<AccountBalance>();
-
-  const initNear = async (): Promise<void> => {
-    console.log("Init Near");
-    const nearConfig = getNearConfig("dev");
-    const rawNear = await initNearWallet(nearConfig);
-
-    if (rawNear) {
-      setNear(rawNear.near);
-    }
-
-    if (rawNear?.wallet.isSignedIn()) {
-      setWallet(rawNear.wallet);
-    }
-  };
-
-  const initNearCounterContract = async (): Promise<void> => {
-    if (!counterContract && near && wallet) {
-      const contract = await initCounterContract(wallet, getNearConfig("dev"));
-      console.log(contract);
-      setCounterContract(contract);
-    }
-  };
 
   const connectWallet = async (): Promise<void> => {
     if (near) {
@@ -57,62 +36,112 @@ const Home: NextPage = () => {
     if (wallet) {
       await signOutFromNearWallet(wallet);
       setWallet(undefined);
+      setCounterContract(undefined);
       router.push("/");
     }
   };
 
-  const getWalletBalance = async (): Promise<void> => {
-    if (wallet) {
-      console.log("getWalletBalance");
-      const balance = await wallet.account().getAccountBalance();
-      setWalletBalance(balance);
-    }
-  };
-
-  useEffect(() => {
-    const initAsync = async (): Promise<void> => {
-      if (!near) {
-        await initNear();
-      }
-    };
-
-    initAsync();
-  }, [near]);
-
-  useEffect(() => {
-    const initAsync = async (): Promise<void> => {
-      if (wallet) {
-        await getWalletBalance();
-      }
-    };
-    initAsync();
-  }, [wallet]);
-
-  useEffect(() => {
-    const initAsync = async (): Promise<void> => {
-      await initNearCounterContract();
-    };
-
-    initAsync();
-  }, [near, wallet]);
-
   const callCounterContract = async (contractFn: Function): Promise<void> => {
     const num = await contractFn(counterContract);
-    await getWalletBalance();
+    const newAccountBalance = await wallet?.account().getAccountBalance();
+
+    setWalletBalance(newAccountBalance);
     setCounterContractValue(num);
   };
 
+  useEffect(() => {
+    const initNear = async () => {
+      const nearConfig = getNearConfig("dev");
+      const rawNear = await initNearWallet(nearConfig);
+
+      if (rawNear) {
+        setNear(rawNear.near);
+      }
+
+      if (rawNear?.wallet.isSignedIn()) {
+        setWallet(rawNear.wallet);
+      }
+    };
+
+    if (!near) {
+      initNear();
+    }
+  }, [near]);
+
+  useEffect(() => {
+    const initWalletBalance = async () => {
+      const balance = await wallet?.account().getAccountBalance();
+      setWalletBalance(balance);
+    };
+
+    if (wallet?.isSignedIn()) {
+      initWalletBalance();
+    }
+  }, [wallet]);
+
+  useEffect(() => {
+    const initNearContract = async () => {
+      // Redundant, but typescript
+      if (wallet) {
+        const contract = await initCounterContract(
+          wallet,
+          getNearConfig("dev")
+        );
+        setCounterContract(contract);
+      }
+    };
+
+    if (!counterContract && wallet) {
+      initNearContract();
+    }
+  }, [wallet, counterContract]);
+
   return (
-    <div className="">
+    <div>
       <main>
         <div className="flex flex-col place-items-center p-5">
           <h1 className="text-3xl">Welcome to some NEAR goodness</h1>
+          {wallet && (
+            <div className="my-5">
+              <p>Connected Wallet: </p>
+              <span>{wallet.getAccountId()}</span>
+              <p className="mt-1">Balance:</p>
+              <span>{walletBalance?.available}</span>
+            </div>
+          )}
+
+          {counterContract && (
+            <>
+              <button
+                onClick={async () => {
+                  callCounterContract(callGetNumFromContract);
+                }}
+                className="bg-blue-400 text-white py-2 px-4 rounded"
+              >
+                Get Counter Number
+              </button>
+              <button
+                className="mt-2 bg-blue-400 text-white py-2 px-2 rounded"
+                onClick={async () => {
+                  callCounterContract(callIncrementFromContract);
+                }}
+              >
+                + Increment
+              </button>
+              <button
+                className="mt-2 bg-blue-400 text-white py-2 px-2 rounded"
+                onClick={async () => {
+                  callCounterContract(callDecrementFromContract);
+                }}
+              >
+                - Decrement
+              </button>
+              <p>Counter Num: {counterContractValue}</p>
+            </>
+          )}
 
           {wallet ? (
             <>
-              <p>Connected Wallet: {wallet.getAccountId()}</p>
-              <p>Balance: {walletBalance?.available}</p>
-
               <button
                 type={"button"}
                 onClick={signOutOfWallet}
@@ -129,33 +158,6 @@ const Home: NextPage = () => {
             >
               Connect Wallet
             </button>
-          )}
-
-          {wallet && counterContract && (
-            <>
-              <button
-                onClick={async () => {
-                  callCounterContract(callGetNumFromContract);
-                }}
-              >
-                Get Counter Number
-              </button>
-              <button
-                onClick={async () => {
-                  callCounterContract(callIncrementFromContract);
-                }}
-              >
-                Increment
-              </button>
-              <button
-                onClick={async () => {
-                  callCounterContract(callDecrementFromContract);
-                }}
-              >
-                Decrement
-              </button>
-              <p>Counter Num: {counterContractValue}</p>
-            </>
           )}
         </div>
       </main>
