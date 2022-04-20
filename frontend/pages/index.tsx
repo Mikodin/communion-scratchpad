@@ -10,6 +10,7 @@ import initNearWallet, {
   signOutFromNearWallet,
 } from "../pages_util/near-util/near-wallet-util";
 import {
+  CounterNearContract,
   initCounterContract,
   callGetNumFromContract,
   callIncrementFromContract,
@@ -21,7 +22,7 @@ const Home: NextPage = () => {
 
   const [near, setNear] = useState<Near>();
   const [wallet, setWallet] = useState<WalletConnection>();
-  const [counterContract, setCounterContract] = useState<Contract>();
+  const [counterContract, setCounterContract] = useState<CounterNearContract>();
   const [counterContractValue, setCounterContractValue] = useState<number>();
   const [walletBalance, setWalletBalance] = useState<AccountBalance>();
   const [isSendingRequest, setIsSendingRequest] = useState<boolean>(false);
@@ -98,6 +99,19 @@ const Home: NextPage = () => {
       initNearContract();
     }
   }, [wallet, counterContract]);
+
+  useEffect(() => {
+    const initCounterContractValue = async () => {
+      if (counterContract) {
+        const num = await callGetNumFromContract(counterContract);
+        setCounterContractValue(num);
+      }
+    };
+
+    if (counterContract && !counterContractValue) {
+      initCounterContractValue();
+    }
+  }, [counterContract, counterContractValue]);
 
   return (
     <div>

@@ -1,7 +1,7 @@
 import * as nearAPI from "near-api-js";
 import type { NearConfig } from "./near-config";
 
-interface CounterNearContract extends nearAPI.Contract {
+export interface CounterNearContract extends nearAPI.Contract {
   increment: () => Promise<void>;
   decrement: () => Promise<void>;
   get_num: () => Promise<number>;
