@@ -4,17 +4,17 @@ import { useState, useEffect } from "react";
 import type { Near, WalletConnection, Contract } from "near-api-js";
 import type { AccountBalance } from "near-api-js/lib/account";
 
-import getNearConfig from "../pages_util/near-api-util/near-config";
+import getNearConfig from "../pages_util/near-util/near-config";
 import initNearWallet, {
   signInToNearWallet,
   signOutFromNearWallet,
-} from "../pages_util/near-api-util/near-wallet-util";
+} from "../pages_util/near-util/near-wallet-util";
 import {
   initCounterContract,
   callGetNumFromContract,
   callIncrementFromContract,
   callDecrementFromContract,
-} from "../pages_util/near-api-util/near-contract-util";
+} from "../pages_util/near-util/near-contract-util";
 
 const Home: NextPage = () => {
   const router = useRouter();
@@ -24,6 +24,7 @@ const Home: NextPage = () => {
   const [counterContract, setCounterContract] = useState<Contract>();
   const [counterContractValue, setCounterContractValue] = useState<number>();
   const [walletBalance, setWalletBalance] = useState<AccountBalance>();
+  const [isSendingRequest, setIsSendingRequest] = useState<boolean>(false);
 
   const connectWallet = async (): Promise<void> => {
     if (near) {
@@ -42,11 +43,13 @@ const Home: NextPage = () => {
   };
 
   const callCounterContract = async (contractFn: Function): Promise<void> => {
+    setIsSendingRequest(true);
     const num = await contractFn(counterContract);
     const newAccountBalance = await wallet?.account().getAccountBalance();
 
     setWalletBalance(newAccountBalance);
     setCounterContractValue(num);
+    setIsSendingRequest(false);
   };
 
   useEffect(() => {
@@ -113,15 +116,17 @@ const Home: NextPage = () => {
           {counterContract && (
             <>
               <button
+                disabled={isSendingRequest}
                 onClick={async () => {
                   callCounterContract(callGetNumFromContract);
                 }}
-                className="bg-blue-400 text-white py-2 px-4 rounded"
+                className="bg-blue-400 text-white py-2 px-4 rounded disabled:bg-gray-400"
               >
                 Get Counter Number
               </button>
               <button
-                className="mt-2 bg-blue-400 text-white py-2 px-2 rounded"
+                disabled={isSendingRequest}
+                className="mt-2 bg-blue-400 text-white py-2 px-2 rounded disabled:bg-gray-400"
                 onClick={async () => {
                   callCounterContract(callIncrementFromContract);
                 }}
@@ -129,7 +134,8 @@ const Home: NextPage = () => {
                 + Increment
               </button>
               <button
-                className="mt-2 bg-blue-400 text-white py-2 px-2 rounded"
+                disabled={isSendingRequest}
+                className="mt-2 bg-blue-400 text-white py-2 px-2 rounded disabled:bg-gray-400"
                 onClick={async () => {
                   callCounterContract(callDecrementFromContract);
                 }}

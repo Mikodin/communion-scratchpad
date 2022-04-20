@@ -1,5 +1,5 @@
 import * as nearAPI from "near-api-js";
-import type { NearConfig } from "././near-config";
+import type { NearConfig } from "./near-config";
 
 interface CounterNearContract extends nearAPI.Contract {
   increment: () => Promise<void>;
